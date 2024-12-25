@@ -17,3 +17,4 @@ local.properties
 .gradle/
 gradle-wrapper.jar
 .idea/
+app/release/
