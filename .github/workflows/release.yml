@@ -1,0 +1,34 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build app
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
+          JAVA_HOME=$JAVA_HOME_17_X64
+          ./gradlew assembleRelease --stacktrace
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      - name: Get apk path
+        id: get_path
+        run: echo "apk=$(find app/build/outputs/apk/release/*.apk)" >> $GITHUB_OUTPUT
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-artifacts
+          path: ${{ steps.get_path.outputs.apk }}
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: latest build
+          files: ${{ steps.get_path.outputs.apk }}
